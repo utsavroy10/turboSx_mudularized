@@ -1,6 +1,69 @@
 import os
 import sys
 from datetime import datetime
+import smtplib
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+
+
+
+class TurboSx:
+    def __init__(self, from_address, to, subject, body, pwd, smtp_server, smtp_port, smtp_con, mail_type="mail", body_type="html"):
+        self.from_address = from_address
+        self.to = to
+        self.subject = subject
+        self.body = body
+        self.pwd = pwd
+        self.mail_type = mail_type
+        self.body_type = body_type
+        self.smtp_server = smtp_server
+        self.smtp_port = smtp_port
+        self.smtp_con = smtp_con
+        self.send_mail()
+
+    def display(self):
+        print(self.from_address)
+
+    def compose_mail(self):
+        msg = MIMEMultipart('alternative')
+        msg['Subject'] = self.subject
+        msg['From'] = self.from_address
+        msg['To'] = self.to
+
+        if self.body_type == "text":
+            part = MIMEText(self.body, 'plain')
+        elif self.body_type == "html":
+            part = MIMEText(self.body, 'html')
+        else:
+            print("Error in loading Body Type!!!")
+
+        msg.attach(part)
+        return msg
+
+    def send_mail(self):
+        msg = self.compose_mail()
+
+        try:
+            self.smtp_con.login(self.from_address, self.pwd)
+            self.smtp_con.sendmail(self.from_address, self.to, msg.as_string())
+            self.smtp_con.quit()
+        except Exception as e:
+            print("Failed to send email:", e)
+
+
+class ShootProcessor:
+    def __init__(self, from_address, to_address, subject, body, pwd, smtp_server, smtp_port, smtp_con):
+        self.from_address = from_address
+        self.to_address = to_address
+        self.subject = subject
+        self.body = body
+        self.pwd = pwd
+        self.smtp_server = smtp_server
+        self.smtp_port = smtp_port
+        self.smtp_con = smtp_con
+
+    def send_email(self):
+        turbo_sx = TurboSx(self.from_address, self.to_address, self.subject, self.body, self.pwd, self.smtp_server, self.smtp_port, self.smtp_con)
 
 class FileProcessor:
     def __init__(self, inbound_path, outbound_path, builds_path):
@@ -67,7 +130,17 @@ class ShootProcessor(FileProcessor):
                             subject = self.read_build_files(os.path.join(self.builds_path, "subject", ln[2])).format(name=ln[0])
                             body = self.read_build_files(os.path.join(self.builds_path, "body", ln[3])).replace("{name}", ln[0]).replace("{email}", ln[1])
                             try:
-                                TurboSx(from_address, ln[1], subject, body, pwd, smtp_server, smtp_port, s)
+                                from_address = from_address
+                                to_address = ln[1]
+                                subject = subject
+                                body = body
+                                pwd = pwd
+                                smtp_server = smtp_server
+                                smtp_port = smtp_port
+                                smtp_con = smtplib.SMTP(smtp_server, smtp_port)
+                                smtp_con.starttls()
+                                shoot_processor = ShootProcessor(from_address, to_address, subject, body, pwd, smtp_server, smtp_port, smtp_con)
+                                shoot_processor.send_email()
                                 print("-> Success", end=" : ")
                                 print(smtp_server)
                                 file_write.write(','.join(ln) + "\n")
