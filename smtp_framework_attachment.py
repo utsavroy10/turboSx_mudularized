@@ -51,7 +51,7 @@ class TurboSx:
             print("Failed to send email:", e)
 
 
-class ShootProcessor:
+class Shooter:
     def __init__(self, from_address, to_address, subject, body, pwd, smtp_server, smtp_port, smtp_con):
         self.from_address = from_address
         self.to_address = to_address
@@ -139,8 +139,8 @@ class ShootProcessor(FileProcessor):
                                 smtp_port = smtp_port
                                 smtp_con = smtplib.SMTP(smtp_server, smtp_port)
                                 smtp_con.starttls()
-                                shoot_processor = ShootProcessor(from_address, to_address, subject, body, pwd, smtp_server, smtp_port, smtp_con)
-                                shoot_processor.send_email()
+                                shooter = Shooter(from_address, to_address, subject, body, pwd, smtp_server, smtp_port, smtp_con)
+                                shooter.send_email()
                                 print("-> Success", end=" : ")
                                 print(smtp_server)
                                 file_write.write(','.join(ln) + "\n")
