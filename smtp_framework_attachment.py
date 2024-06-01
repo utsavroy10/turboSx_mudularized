@@ -8,14 +8,6 @@ from email.mime.text import MIMEText
 from email.mime.base import MIMEBase
 from email import encoders
 
-import os
-import sys
-from datetime import datetime
-import smtplib
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
-from email.mime.base import MIMEBase
-from email import encoders
 
 class TurboSx_Attach:
     def __init__(self, from_address, to, subject, body, pwd, smtp_server, smtp_port, path, mail_type="mail", body_type="text"):
