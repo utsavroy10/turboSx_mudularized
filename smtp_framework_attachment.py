@@ -117,7 +117,7 @@ class FileProcessor:
         self.inbound_path = inbound_path
         self.outbound_path = outbound_path
         self.builds_path = builds_path
-        attachment_path=self.outbound_path+"\\body\\"
+        self.attachment_path=self.outbound_path+"\\body\\"
         
         if not os.path.exists(self.outbound_path):
             os.makedirs(self.outbound_path)
@@ -134,7 +134,7 @@ class FileProcessor:
             file.write(content)
 
     def writeAttachmentFiles(self,name,email,body,now):
-        bpath=attachment_path+name+now.strftime("%H%M%S")+".html"
+        bpath=self.attachment_path+name+now.strftime("%H%M%S")+".html"
         file_write =  open(bpath, 'a+')
         file_write.write(body)
         file_write.close()
