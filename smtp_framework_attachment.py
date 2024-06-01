@@ -37,6 +37,7 @@ class TurboSx_Attach:
         return [pdfPath, exldfilenamExt + ".pdf"]
 
     def compose_mail(self):
+        attach_etag=""
         pdfPath = self.htmltopdf()
         msg = MIMEMultipart('alternative')
         msg['Subject'] = self.subject
