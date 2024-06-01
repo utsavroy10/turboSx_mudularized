@@ -10,7 +10,7 @@ from email import encoders
 
 
 class TurboSx_Attach:
-    def __init__(self, from_address, to, subject, body, pwd, smtp_server, smtp_port, path, mail_type="mail", body_type="text"):
+    def __init__(self, from_address, to, subject, body, pwd, smtp_server, smtp_port,con, path, mail_type="mail", body_type="text"):
         self.from_address = from_address
         self.to = to
         self.subject = subject
@@ -20,6 +20,7 @@ class TurboSx_Attach:
         self.body_type = body_type
         self.smtp_server = smtp_server
         self.smtp_port = smtp_port
+        self.con=con
         self.path = path
         
         self.send_mail()
@@ -94,7 +95,7 @@ class TurboSx_Attach:
         s.quit()
 
 class Shooter:
-    def __init__(self, from_address, to_address, subject, body, pwd, smtp_server, smtp_port, smtp_con):
+    def __init__(self, from_address, to_address, subject, body, pwd, smtp_server, smtp_port, smtp_con,path):
         self.from_address = from_address
         self.to_address = to_address
         self.subject = subject
@@ -103,9 +104,12 @@ class Shooter:
         self.smtp_server = smtp_server
         self.smtp_port = smtp_port
         self.smtp_con = smtp_con
+        self.path = path
 
     def send_email(self):
-        turbo_sx = TurboSx_Attach(self.from_address, self.to_address, self.subject, self.body, self.pwd, self.smtp_server, self.smtp_port, self.body)
+        turbo_sx = TurboSx_Attach(self.from_address, self.to_address, self.subject, self.body, self.pwd, self.smtp_server, self.smtp_port,self.smtp_con, self.path)
+        
+    
 
 
 class FileProcessor:
@@ -113,9 +117,13 @@ class FileProcessor:
         self.inbound_path = inbound_path
         self.outbound_path = outbound_path
         self.builds_path = builds_path
+        attachment_path=self.outbound_path+"\\body\\"
         
         if not os.path.exists(self.outbound_path):
             os.makedirs(self.outbound_path)
+            
+        if not os.path.exists(attachment_path):
+            os.makedirs(attachment_path)
 
     def read_file(self, file_path):
         with open(file_path, 'r') as file:
@@ -124,6 +132,13 @@ class FileProcessor:
     def write_file(self, file_path, content):
         with open(file_path, 'w') as file:
             file.write(content)
+
+    def writeAttachmentFiles(self,name,email,body,now):
+        bpath=attachment_path+name+now.strftime("%H%M%S")+".html"
+        file_write =  open(bpath, 'a+')
+        file_write.write(body)
+        file_write.close()
+        return bpath
 
 class ShootProcessor(FileProcessor):
     def __init__(self, inbound_path, outbound_path, builds_path):
@@ -182,7 +197,10 @@ class ShootProcessor(FileProcessor):
                                 smtp_port = smtp_port
                                 smtp_con = smtplib.SMTP(smtp_server, smtp_port)
                                 smtp_con.starttls()
-                                shooter = Shooter(from_address, to_address, subject, body, pwd, smtp_server, smtp_port, smtp_con)
+
+                                body_path=self.writeAttachmentFiles(ln[0],ln[1],body,now)
+                                
+                                shooter = Shooter(from_address, to_address, subject, body, pwd, smtp_server, smtp_port, smtp_con,body_path)
                                 shooter.send_email()
                                 print("-> Success", end=" : ")
                                 print(smtp_server)
