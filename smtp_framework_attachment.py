@@ -1,14 +1,24 @@
 import os
 import sys
+import pdfkit
 from datetime import datetime
 import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+from email.mime.base import MIMEBase
+from email import encoders
 
+import os
+import sys
+from datetime import datetime
+import smtplib
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from email.mime.base import MIMEBase
+from email import encoders
 
-
-class TurboSx:
-    def __init__(self, from_address, to, subject, body, pwd, smtp_server, smtp_port, smtp_con, mail_type="mail", body_type="html"):
+class TurboSx_Attach:
+    def __init__(self, from_address, to, subject, body, pwd, smtp_server, smtp_port, path, mail_type="mail", body_type="text"):
         self.from_address = from_address
         self.to = to
         self.subject = subject
@@ -18,17 +28,29 @@ class TurboSx:
         self.body_type = body_type
         self.smtp_server = smtp_server
         self.smtp_port = smtp_port
-        self.smtp_con = smtp_con
+        self.path = path
+        
         self.send_mail()
 
     def display(self):
         print(self.from_address)
 
+    def htmltopdf(self):
+        htmlPath = self.path
+        exldfilenamExt = self.path[self.path.rindex("\\"):len(self.path)].strip('\\').split('.')[0]
+        pdfPath = self.path[0:self.path.rindex("\\")] + "\\" + exldfilenamExt + ".pdf"
+        # Assuming pdfkit is imported and available
+        pdfkit.from_file(htmlPath, pdfPath)
+        return [pdfPath, exldfilenamExt + ".pdf"]
+
     def compose_mail(self):
+        pdfPath = self.htmltopdf()
         msg = MIMEMultipart('alternative')
         msg['Subject'] = self.subject
-        msg['From'] = self.from_address
+        msg['From'] = attach_etag + " " + self.from_address
         msg['To'] = self.to
+
+        body = self.body
 
         if self.body_type == "text":
             part = MIMEText(self.body, 'plain')
@@ -36,20 +58,48 @@ class TurboSx:
             part = MIMEText(self.body, 'html')
         else:
             print("Error in loading Body Type!!!")
-
+        
         msg.attach(part)
+        
+        filename = pdfPath[1]
+        attachment = open(pdfPath[0], "rb") 
+          
+        p = MIMEBase('application', 'octet-stream') 
+        p.set_payload((attachment).read()) 
+        encoders.encode_base64(p) 
+        p.add_header('Content-Disposition', "attachment; filename= %s" % filename) 
+        msg.attach(p)
+        
         return msg
+
+    def choose_mail(self):
+        if self.mail_type == "gmail":
+            self.send_gmail()
+        elif self.mail_type == "mail":
+            self.send_mail()
+        else:
+            print("Error in Loading Mail Type")
+
+    def send_gmail(self):
+        msg = self.compose_mail()
+        s = smtplib.SMTP('smtp.gmail.com', 587)
+        s.connect('smtp.gmail.com', 587)
+        s.ehlo()
+        s.starttls()
+        s.ehlo()
+        s.login(self.from_address, self.pwd)
+        s.sendmail(self.from_address, self.to, msg.as_string())
 
     def send_mail(self):
         msg = self.compose_mail()
-
-        try:
-            self.smtp_con.login(self.from_address, self.pwd)
-            self.smtp_con.sendmail(self.from_address, self.to, msg.as_string())
-            self.smtp_con.quit()
-        except Exception as e:
-            print("Failed to send email:", e)
-
+        s = smtplib.SMTP(self.smtp_server, self.smtp_port)
+        s.connect(self.smtp_server, self.smtp_port)
+        s.ehlo()
+        s.starttls()
+        s.ehlo()
+        s.login(self.from_address, self.pwd)
+        s.sendmail(self.from_address, self.to, msg.as_string())
+        s.quit()
 
 class Shooter:
     def __init__(self, from_address, to_address, subject, body, pwd, smtp_server, smtp_port, smtp_con):
@@ -63,7 +113,8 @@ class Shooter:
         self.smtp_con = smtp_con
 
     def send_email(self):
-        turbo_sx = TurboSx(self.from_address, self.to_address, self.subject, self.body, self.pwd, self.smtp_server, self.smtp_port, self.smtp_con)
+        turbo_sx = TurboSx_Attach(self.from_address, self.to_address, self.subject, self.body, self.pwd, self.smtp_server, self.smtp_port, self.body)
+
 
 class FileProcessor:
     def __init__(self, inbound_path, outbound_path, builds_path):
