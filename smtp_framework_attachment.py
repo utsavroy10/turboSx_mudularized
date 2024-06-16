@@ -114,10 +114,12 @@ class Shooter:
 
 
 class FileProcessor:
-    def __init__(self, inbound_path, outbound_path, builds_path):
+    def __init__(self, inbound_path, outbound_path, builds_path,dt):
         self.inbound_path = inbound_path
-        self.outbound_path = outbound_path
+        self.dt=dt
+        self.outbound_path = outbound_path+"\\"+self.dt+"\\"
         self.builds_path = builds_path
+        
         
         if not os.path.exists(self.outbound_path):
             os.makedirs(self.outbound_path)       
@@ -141,12 +143,13 @@ class FileProcessor:
 
 class ShootProcessor(FileProcessor):
     def __init__(self, inbound_path, outbound_path, builds_path):
-        super().__init__(inbound_path, outbound_path, builds_path)
+        ndate = datetime.now().strftime("%Y%m%d")
+        super().__init__(inbound_path, outbound_path, builds_path,ndate)
 
     def shoot(self):
         ls = os.listdir(self.inbound_path)
         t_count = len(ls)
-        ndate = datetime.now().strftime("%Y%m%d")
+        #ndate = datetime.now().strftime("%Y%m%d")
         wpath_up = os.path.join(self.outbound_path, f"{ids}_{ndate}.csv")
         
         if len(ls) > 0:
@@ -231,7 +234,8 @@ class ShootProcessor(FileProcessor):
 
 class SplitFeedsProcessor(FileProcessor):
     def __init__(self, feeds_path, inbound_path, outbound_path):
-        super().__init__(inbound_path, outbound_path, None)
+        ndate = datetime.now().strftime("%Y%m%d")
+        super().__init__(inbound_path, outbound_path, None,ndate)
         self.feeds_path = feeds_path
 
     def split_feeds(self, record_limit):
